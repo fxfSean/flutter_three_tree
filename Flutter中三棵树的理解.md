@@ -232,7 +232,7 @@ void layout(Constraints constraints, { bool parentUsesSize = false }) {
         <tr>
             <td rowspan=2>组合型</td>
             <td>StatelessWidget</td>
-            <td rowspan=2>ComponentElement</td>
+            <td rowspan=3>ComponentElement</td>
           	<td>NA</td>
           <td rowspan=2>组合节点，不对应RenderObject</td>
         </tr>
@@ -243,7 +243,6 @@ void layout(Constraints constraints, { bool parentUsesSize = false }) {
         <tr>
             <td>代理型</td>
             <td>ProxyWidget</td>
-          	<td>ProxyElement</td>
           	<td>NA</td>
           	<td>代理组件，数据传递</td>
         </tr>
@@ -257,7 +256,7 @@ void layout(Constraints constraints, { bool parentUsesSize = false }) {
   </tbody>
 </table>
 
-> 表中仅展示了常用Widget和对应关系，并不代表全部
+> 表中仅列出了常用Widget和对应关系，并不代表全部
 
 所以说widget和element和renderObject是一一对应是有语境的，在展示型这一行的情况下是没问题的，但是在全局范围这么说，是absolutly not的。还有从后往前说，一个RenderObject对应一个Element和一个Widget是没问题的，但是，正着说也是不准确的。
 
