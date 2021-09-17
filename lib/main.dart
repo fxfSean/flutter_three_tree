@@ -12,14 +12,14 @@ void main() {
     ),
   ));
 
-  runApp(RichText(
-    textDirection: TextDirection.ltr,
-    text: TextSpan(
-        text: 'Hello Flutter'
-    ),
-  ));
-
-  runApp(MyApp());
+  // runApp(RichText(
+  //   textDirection: TextDirection.ltr,
+  //   text: TextSpan(
+  //       text: 'Hello Flutter'
+  //   ),
+  // ));
+  //
+  // runApp(MyApp());
 }
 
 
