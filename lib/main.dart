@@ -5,10 +5,14 @@ import 'package:flutter_three_tree_demo/component/yellow_bird.dart';
 import 'package:flutter_three_tree_demo/mixin_test/imp_cls.dart';
 
 void main() {
-  runApp(RichText(
-    textDirection: TextDirection.ltr,
-    text: TextSpan(
-      text: 'Hello World'
+  runApp(Container(
+    color: Colors.blue,
+    child: Row(
+      textDirection: TextDirection.ltr,
+      children: [
+        Image.network('https://www.example.com/1.png'),
+        const Text('A',textDirection: TextDirection.ltr,),
+      ],
     ),
   ));
 

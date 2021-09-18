@@ -264,9 +264,93 @@ void layout(Constraints constraints, { bool parentUsesSize = false }) {
 
 ## 串联过程
 
-上面粗略的看了三颗树的转化过程，那么在代码层面，他们是如何经过方法的调用串联起来的呢？
+上面粗略的看了三颗树的转化过程，那么在代码层面，他们是如何经过方法的调用串联起来的呢？可以主要分为两个过程：
 
+### 根view的attachRootWidget
 
+初始化Widget树Element树和RenderObject树的root节点，分别是RenderObjectToWidgetAdapter、RenderObjectToWidgetElement、RenderView。
+
+然后在WidgetsBinding.attachRootWidget方法中，将runApp传入的rootWidget添加到widget树根RenderObjectToWidgetAdapter实例的child上，调用它的attachToRenderTree，将element关联到RenderTree上，调用了element的mount方法。
+
+```dart
+/// Takes a widget and attaches it to the [renderViewElement], creating it if
+  /// necessary.
+  /// This is called by [runApp] to configure the widget tree.
+  ///  * [RenderObjectToWidgetAdapter.attachToRenderTree], which inflates a
+  ///    widget and attaches it to the render tree.
+  void attachRootWidget(Widget rootWidget) {
+    final bool isBootstrapFrame = renderViewElement == null;
+    _readyToProduceFrames = true;
+    _renderViewElement = RenderObjectToWidgetAdapter<RenderBox>(
+      container: renderView,
+      debugShortDescription: '[root]',
+      child: rootWidget,
+    ).attachToRenderTree(buildOwner!, renderViewElement as RenderObjectToWidgetElement<RenderBox>?);
+    if (isBootstrapFrame) {
+      SchedulerBinding.instance!.ensureVisualUpdate();
+    }
+  }
+```
+
+其中的renderView就是RenderObject tree上的根节点，它是在RendererBinding类中被初始化的
+
+```dart
+/// The glue between the render tree and the Flutter engine.
+/// render tree 和 Flutter engine之间的胶水
+mixin RendererBinding on BindingBase, ServicesBinding, SchedulerBinding, GestureBinding, SemanticsBinding, HitTestable {
+	 @override
+  void initInstances() {
+    super.initInstances();
+    /// ...
+    initRenderView();
+   /// ...
+  }
+  
+  void initRenderView() {
+		/// ...
+    renderView = RenderView(configuration: createViewConfiguration(), window: window);
+    renderView.prepareInitialFrame();
+  }
+
+}
+```
+
+attachToRenderTree方法
+
+```dart
+/// Used by [runApp] to bootstrap applications.
+/// 供runApp使用来引导程序
+class RenderObjectToWidgetAdapter<T extends RenderObject> extends RenderObjectWidget {
+	/// Used by [runApp] to bootstrap applications.
+  RenderObjectToWidgetElement<T> attachToRenderTree(BuildOwner owner, [ 	         RenderObjectToWidgetElement<T>? element ]) {
+    if (element == null) {
+      owner.lockState(() {
+        element = createElement();
+        assert(element != null);
+        element!.assignOwner(owner);
+      });
+      owner.buildScope(element!, () {
+        element!.mount(null, null);
+      });
+    } else {
+      element._newWidget = this;
+      element.markNeedsBuild();
+    }
+    return element!;
+  }
+
+	RenderObjectToWidgetElement<T> createElement() => RenderObjectToWidgetElement<T>(this);
+
+}
+```
+
+这里element为空，所以创建了RenderObjectToWidgetElement的实例，然后mount。
+
+### 子view的attachToRenderTree
+
+element的mount方法中，这里触发了挂载element到Element tree，判断是包含渲染对象的RenderObjectElement就创建RenderObject，调用attachRenderObject挂载到RenderObject tree上。然后_rebuild→updateChild→inflateWidget→newChild.mount(this, newSlot)触发了树的深度遍历
+
+![时序图](images/时序图.jpg)
 
 ## 有什么作用
 
