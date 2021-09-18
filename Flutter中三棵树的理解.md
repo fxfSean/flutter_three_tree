@@ -106,13 +106,13 @@ class Container extends StatelessWidget {
 
 相应的，Image和Text在build期间也可能插入子节点比如RawImage和RichText，所以widget树的层级结构可能比代码展示的更深
 
-<img src="/Users/fuxiaofang/dev/flutter/demo/flutter_three_tree_demo/images/widgets-container.png" style="zoom:33%;" />
+<img src="images/widgets-container.png" style="zoom:33%;" />
 
 在构建阶段，Flutter将上述的widget转换成相应的**element tree** ，一一对应，树的层级结构上的每个元素代表了一个具体位置的widget实例。
 
 > 这里的一一对应其实是framework层的经过转化后的widget，并不是代码层的用户编写的widget跟element的对应，比如一个Container在设置属性后被转化成多个子widget，同时对应了多个element节点。
 
-![](/Users/fuxiaofang/dev/flutter/demo/flutter_three_tree_demo/images/widget-element.png)
+![](images/widget-element.png)
 
 
 
@@ -155,7 +155,7 @@ class StatelessElement extends ComponentElement {
 
 渲染树上的每个节点的基类型是RenderObject，在构建阶段，Flutter仅将element tree中的RenderObjectElement对象成可渲染的对象，不同的Render对象渲染不同类型，[`RenderParagraph`](https://api.flutter.dev/flutter/rendering/RenderParagraph-class.html)渲染text，[`RenderImage`](https://api.flutter.dev/flutter/rendering/RenderImage-class.html) 渲染image
 
-![](/Users/fuxiaofang/dev/flutter/demo/flutter_three_tree_demo/images/trees.png)
+![](images/trees.png)
 
 Flutter中多数widgets的渲染对象是继承自RenderBox的，它使用了笛卡尔坐标系在2D空间，它提供了一个盒子约束模型，限制了widget的最小和最大宽度和高度。
 
@@ -208,7 +208,7 @@ void layout(Constraints constraints, { bool parentUsesSize = false }) {
 
 这样就完成了树的深度遍历过程
 
-<img src="/Users/fuxiaofang/dev/flutter/demo/flutter_three_tree_demo/images/constraints-sizes.png" style="zoom:30%;" />
+<img src="images/constraints-sizes.png" style="zoom:30%;" />
 
 盒子约束模型是一种很强大的布局对象的方式，时间复杂度为O(n)
 
@@ -348,9 +348,88 @@ class RenderObjectToWidgetAdapter<T extends RenderObject> extends RenderObjectWi
 
 ### 子view的attachToRenderTree
 
-element的mount方法中，这里触发了挂载element到Element tree，判断是包含渲染对象的RenderObjectElement就创建RenderObject，调用attachRenderObject挂载到RenderObject tree上。然后_rebuild→updateChild→inflateWidget→newChild.mount(this, newSlot)触发了树的深度遍历
+element的mount方法中，这里触发了挂载element到Element tree，判断是包含渲染对象的RenderObjectElement就创建RenderObject，调用attachRenderObject挂载到RenderObject tree上。然后_rebuild→updateChild→inflateWidget→newWidget.createElement→newChild.mount(this, newSlot)触发了树的深度遍历，时序图如下（粗略）
 
 ![时序图](images/时序图.jpg)
+
+关键的一点是，newChild.mount方法会调用Element的字类型主要是两个SingleChildRenderObjectElement和MultiChildRenderObjectElement，名字起的很明显，一个孩子或者多个孩子的Element。mount方法如下
+
+```dart
+class SingleChildRenderObjectElement extends RenderObjectElement {
+	@override
+  void mount(Element? parent, Object? newSlot) {
+    super.mount(parent, newSlot);
+    _child = updateChild(_child, widget.child, null);
+  }
+}
+
+class MultiChildRenderObjectElement extends RenderObjectElement {
+	@override
+  void mount(Element? parent, Object? newSlot) {
+    super.mount(parent, newSlot);
+    final List<Element> children = List<Element>.filled(widget.children.length, _NullElement.instance, growable: false);
+    Element? previousChild;
+    for (int i = 0; i < children.length; i += 1) {
+      final Element newChild = inflateWidget(widget.children[i], 		IndexedSlot<Element?>(i, previousChild));
+      children[i] = newChild;
+      previousChild = newChild;
+    }
+    _children = children;
+  }
+}
+
+```
+
+可见它们都做了两件事：
+
+* 调用super.mount()，挂载element到Element tree，createRenderObject，attachRenderObject，挂载_renderObject到RenderObject tree
+* updateChild，传入widget.child，继续下一层级的widget树的转换，这里slot分别传的为null，和IndexedSlot对象
+
+如果Element节点是ComponentElement类型，mount方法如下
+
+```dart
+abstract class ComponentElement extends Element {
+	@override
+  void mount(Element? parent, Object? newSlot) {
+    super.mount(parent, newSlot);
+    /// ...
+    _firstBuild();
+    assert(_child != null);
+  }
+  
+  /// 最终会调到performRebuild
+  @override
+  void performRebuild() {
+    Widget? built;
+    try {
+      /// 我们经常在代码中重写的build()函数，就是这里
+      built = build();
+    } catch (e, stack) {
+      /// 构建错误页面ErrorWidget，我们看的到错误红色页面
+      built = ErrorWidget.builder(
+        _debugReportException(
+          ErrorDescription('building $this'),
+          e,
+          stack,
+          informationCollector: () sync* {
+            yield DiagnosticsDebugCreator(DebugCreator(this));
+          },
+        ),
+      );
+    } 
+    /// 更新widget，继续循环
+    _child = updateChild(_child, built, slot);
+     
+  }
+  /// 在StatelessWidget/StafulWidget中重写的方法
+  @protected
+  Widget build();
+}
+```
+
+### Slot对象
+
+updateChild传入的slot对象是干什么用的呢？首先，细心的你有没有注意一点，我们的Element，和RenderObject树的结构
 
 ## 有什么作用
 
