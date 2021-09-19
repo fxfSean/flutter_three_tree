@@ -256,13 +256,14 @@ void layout(Constraints constraints, { bool parentUsesSize = false }) {
   </tbody>
 </table>
 
+
 > 表中仅列出了常用Widget和对应关系，并不代表全部
 
 所以说widget和element和renderObject是一一对应是有语境的，在展示型这一行的情况下是没问题的，但是在全局范围这么说，是absolutly not的。还有从后往前说，一个RenderObject对应一个Element和一个Widget是没问题的，但是，正着说也是不准确的。
 
 
 
-## 串联过程
+## 建立过程
 
 上面粗略的看了三颗树的转化过程，那么在代码层面，他们是如何经过方法的调用串联起来的呢？可以主要分为两个过程：
 
@@ -466,11 +467,8 @@ RenderObjectElement? _findAncestorRenderObjectElement() {
 
 ![](images/slot-multi.png)
 
-## 有什么作用
-
-
-
-## 开发中注意什么
-
 ## 总结
 
+本篇为三棵树理解的第一篇，重点分析了三棵树的建立过程，下一篇我们继续分析三棵树的刷新过程，以及为什么要设计三棵树，以及理解了三棵树的概念，对我们开发中有哪些指导或者注意的点，如果对下文还有期待，请给本文点赞，我抓紧更新😄。
+
+文中有一些个人理解，有偏差的地方，请大家批评指正，多谢！
