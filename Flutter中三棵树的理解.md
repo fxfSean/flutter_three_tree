@@ -8,7 +8,7 @@ Widget 是用户页面的描述，表示了Element的配置信息，Flutter页�
 
 ```dart
 @immutable
-abstract class Widget extends DiagnosticableTree {}
+abstract class Widget extends DiagnosticableTree {/// ...}
 ```
 
 这也就意味着，所有它直接声明或继承的变量都必须为final类型的。如果想给widget关联一个可变的状态，考虑使用StatefulWidget，它会通过[StatefulWidget.createState]创建一个State对象，然后，每当它转化成一个element时会合并到树上。
@@ -23,21 +23,24 @@ StatelessWidget、StatefulWidget我们很熟悉是用来编写页面和组件的
 * PreferredSizeWidget，一个返回它自身想要大小的组件，如果它在布局过程中是不受限制的，例如，AppBar和TabBar
 * ProxyWidget，代理组件，提供一个子组件，而不是自己创建，例如，InheritedWidget和ParentDataWidget
 
-
-
 ### Element
 
 元素树，是Widget在具体位置的实例化，它负责控制Widget的生命周期，持有了widget实例和renderObject实例，它和Widget继承自同一个类，DiagnosticableTree可诊断树，并且实现了BuildContext类。
 
 <img src="images/img-element.png" alt="image-20210916173504847" style="zoom:50%;" />
 
+Element有两种基本类型：
+
+* ComponentElement，其他elements的宿主，它本身不包含RenderObject，而由它持有的element节点包含，像StatelessWidget 和StatefulWidget 中分别创建的StatelessElement和StatefulElement都是继承自ComponentElement
+* RenderObjectElement，参与layout或者绘制阶段的元素
+
 ### RenderObject
 
-渲染树中的每个节点基类是RenderObject，它定义了布局和绘制的抽象模型。每一个RenderObjects又一个parent，和一个插槽parentData，父级的RenderObject可以在其中存储孩子的具体数据，例如，child的位置信息。
+渲染树中的每个节点基类是RenderObject，它定义了布局和绘制的抽象模型。每一个RenderObject有一个parent，和一个parentData，父级的RenderObject可以在其中存储孩子的具体数据，例如，child的位置信息。
 
 <img src="images/image-render.png" alt="image-20210917093521088" style="zoom:50%;" />
 
-* RenderObject 仅实现了基本的布局和绘制，没有具体的布局绘制模型，相当于ViewGroup，其子类RenderBox使用了笛卡尔坐标系，它的一些子类是真正的渲染树上的节点。大多数情况下，当我们想自定义一个渲染对象时，直接继承RenderObject有些过重，更好的选择是继承RenderBox，除非你不想使用笛卡尔坐标系统。
+* RenderObject 仅实现了基本的布局和绘制，没有具体的布局绘制模型，相当于ViewGroup，其子类RenderBox使用了笛卡尔坐标系，它的一些子类是真正的渲染树上的节点。大多数情况下，当我们想自定义一个渲染对象时，直接继承RenderObject有些过重overkill，更好的选择是继承RenderBox，除非你不想使用笛卡尔坐标系统。
 * RenderView，通常情况下是Flutter渲染树的根节点，可以理解为DecorView，它只有一个子节点，必须是RenderBox类型的。
 
 ## 对应关系
@@ -102,7 +105,7 @@ class Container extends StatelessWidget {
 }
 ```
 
-可以看到，Container一个属性，都代表插入一个控制该属性的新节点widget，它本身就是一个封装，替我们组合了大量小部件，减轻了开发工作量。我们设置了color熟悉，所以它会插入一个ColoredBox节点，显示它的颜色
+可以看到，Container的一些属性，都代表插入一个控制该属性的新节点widget，所以它本身就是一个封装，替我们组合了大量小部件，减轻了开发工作量。我们设置了color属性，它会插入一个ColoredBox节点，显示它的颜色。
 
 相应的，Image和Text在build期间也可能插入子节点比如RawImage和RichText，所以widget树的层级结构可能比代码展示的更深
 
@@ -115,11 +118,6 @@ class Container extends StatelessWidget {
 ![](images/widget-element.png)
 
 
-
-Element有两种基本类型：
-
-* ComponentElement，其他elements的宿主，它本身不包含RenderObject，而由它持有的element节点包含，像StatelessWidget 和StatefulWidget 中分别创建的StatelessElement和StatefulElement都是继承自ComponentElement
-* RenderObjectElement，参与layout或者绘制阶段的元素
 
 上边提到了Element实现了BuildContext，任何widget的element可以通过build()方法中传入的BuildContext参数访问到，它是widget在树上操作的句柄。例如，可以调用Theme.of(context)，查找widget树上最近的主题，如果widget定义了单独的主题就返回它，如果没有返回app的主题
 
@@ -147,7 +145,7 @@ class StatelessElement extends ComponentElement {
 
 可以看到，StatelessElement元素在构建的时候调用build方法，会调用StatelessWidget的build方法，传入BuildContext为this。
 
-因为widgets是immutable的，包括节点之间的父/子关系，对widget树的任何修改（比如，Text('A') to Text('B'))会导致一系列新的widget对象的被返回。但这并不意味下层必须被重建，element tree可能在界面刷新时是持久的（persistent），因此对性能起着关键作用，因为Flutter缓存了底层表示，使它表现的可以像完全丢弃上层的widget层一样。通过遍历widgets的修改，可以做到只重新构建一部分的element tree。
+因为widgets是immutable的，包括节点之间的父/子关系，对widget树的任何修改（比如，Text('A') to Text('B'))会导致一系列新的widget对象的被重建。但这并不意味下层必须被重建，element tree可能在界面刷新时是持久的（persistent），因此对性能起着关键作用，因为Flutter缓存了底层表示，使它表现的可以像完全丢弃上层的widget层一样。通过遍历widgets的修改，可以做到只重新构建一部分的element tree。
 
 ### Element到RenderObject
 
@@ -261,8 +259,6 @@ void layout(Constraints constraints, { bool parentUsesSize = false }) {
 
 所以说widget和element和renderObject是一一对应是有语境的，在展示型这一行的情况下是没问题的，但是在全局范围这么说，是absolutly not的。还有从后往前说，一个RenderObject对应一个Element和一个Widget是没问题的，但是，正着说也是不准确的。
 
-
-
 ## 建立过程
 
 上面粗略的看了三颗树的转化过程，那么在代码层面，他们是如何经过方法的调用串联起来的呢？可以主要分为两个过程：
@@ -353,7 +349,7 @@ element的mount方法中，这里触发了挂载element到Element tree，判断�
 
 ![时序图](images/时序图.jpg)
 
-关键的一点是，newChild.mount方法会调用Element的字类型主要是两个SingleChildRenderObjectElement和MultiChildRenderObjectElement，名字起的很明显，一个孩子或者多个孩子的Element。mount方法如下
+关键的一点是，newChild.mount方法会调用Element的子类型主要是两个SingleChildRenderObjectElement和MultiChildRenderObjectElement，名字起的很明显，一个孩子或者多个孩子的Element。mount方法如下
 
 ```dart
 class SingleChildRenderObjectElement extends RenderObjectElement {
@@ -432,7 +428,7 @@ abstract class ComponentElement extends Element {
 
 updateChild传入的slot对象是干什么用的呢？一句话总结就是，为了标记RenderObject挂载到RenderObject tree上的位置。
 
-首先，每一个Element都会最终包裹一个RenderObject，最终挂载到RenderObject tree上，不管是自身包裹，或者是它的子孙包裹。所以，当Element的直接child不包含RenderObject时，例如StatelessElement/StatefulElement，它就要标记下一个RenderObject对象要挂载到RenderObject tree上的哪个节点。所以，在它们的父类ComponentElement的updateChild方法中传的slot值就是要挂载的位置。比如这样的element节点
+首先，每一个Element都会最终包裹一个RenderObject，最终挂载到RenderObject tree上，不管是自身包裹，或者是它的子孙包裹。所以，当Element的直接child不包含RenderObject时，例如StatelessElement/StatefulElement，它就要标记下一个RenderObject对象要挂载到RenderObject tree上的哪个节点。所以，在它们的父类ComponentElement的updateChild方法中传的slot值就是要挂载的位置。比如这样的element节点，会一直向下传递slot直到是RenderObjectElement节点。
 
 ![](images/slot-element.drawio.png)
 
@@ -461,14 +457,16 @@ RenderObjectElement? _findAncestorRenderObjectElement() {
   }
 ```
 
-所以单个孩子的SingleChildRenderObjectElement不需要slot，因为总能找到 ancestor挂载点。而MultiChildRenderObjectElement，由于多个孩子都找到同一个ancestor节点，所以就又了slot将兄弟姐妹节点按顺序排列起来，生成IndexedSlot<Element?>(i, previousChild)的slot，这就有了初始的slot往下传递，所以slot是从MultiChildRenderObjectElement这样的节点开始分化的
+所以单个孩子的SingleChildRenderObjectElement不需要slot，因为总能找到 ancestor挂载点。而MultiChildRenderObjectElement，由于多个孩子都找到同一个ancestor节点，所以就有了slot将兄弟节点按顺序排列起来，生成IndexedSlot<Element?>(i, previousChild)的slot，这就有了初始的slot往下传递，所以slot是从MultiChildRenderObjectElement这样的节点开始分化的
 
 > 这里排除了刚开始建立渲染树的根节点_rootChildSlot
 
 ![](images/slot-multi.png)
 
+这样就完成了，Element tree，和RenderObject tree的父子节点/兄弟节点之间的错落有致的树型结构。RenderObjectElement在整个过程中，占据核心的功能，左手一只控制widget向下更新，右手一只负责控制RenderObject生成，挂载到Render tree的正确节点上。
+
 ## 总结
 
 本篇为三棵树理解的第一篇，重点分析了三棵树的建立过程，下一篇我们继续分析三棵树的刷新过程，以及为什么要设计三棵树，以及理解了三棵树的概念，对我们开发中有哪些指导或者注意的点，如果对下文还有期待，请给本文点赞，我抓紧更新😄。
 
-文中有一些个人理解，有偏差的地方，请大家批评指正，多谢！
+文中难免有个人理解，有偏差的地方，请大家批评指正，多谢！
