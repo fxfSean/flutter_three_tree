@@ -429,7 +429,38 @@ abstract class ComponentElement extends Element {
 
 ### Slot对象
 
-updateChild传入的slot对象是干什么用的呢？首先，细心的你有没有注意一点，我们的Element，和RenderObject树的结构
+updateChild传入的slot对象是干什么用的呢？一句话总结就是，为了标记RenderObject挂载到RenderObject tree上的位置。
+
+首先，每一个Element都会最终包裹一个RenderObject，最终挂载到RenderObject tree上，不管是自身包裹，或者是它的子孙包裹。所以，当Element的直接child不包含RenderObject时，例如StatelessElement/StatefulElement，它就要标记下一个RenderObject对象要挂载到RenderObject tree上的哪个节点。所以，在它们的父类ComponentElement的updateChild方法中传的slot值就是要挂载的位置。
+
+![](images/slot-element.drawio.png)
+
+那么这个值什么情况下会初始化并往下传递呢？SingleChildRenderObjectElement往下传递的是null，看来它并不需要插槽，看下attachRenderObject方法
+
+```dart
+@override
+  void attachRenderObject(Object? newSlot) {
+    assert(_ancestorRenderObjectElement == null);
+    _slot = newSlot;
+    /// 找到是RenderObjectElement对象的祖先节点
+    _ancestorRenderObjectElement = _findAncestorRenderObjectElement();
+    /// 根据newSlot插槽，插入renderObject到渲染树
+    _ancestorRenderObjectElement?.insertRenderObjectChild(renderObject, newSlot);
+    final ParentDataElement<ParentData>? parentDataElement = _findAncestorParentDataElement();
+    if (parentDataElement != null)
+      _updateParentData(parentDataElement.widget);
+  }
+
+RenderObjectElement? _findAncestorRenderObjectElement() {
+    Element? ancestor = _parent;
+  /// 循环向上找到第一个RenderObjectElement的对象，其实就是为了找到RenderObject的父节点
+    while (ancestor != null && ancestor is! RenderObjectElement)
+      ancestor = ancestor._parent;
+    return ancestor as RenderObjectElement?;
+  }
+```
+
+
 
 ## 有什么作用
 

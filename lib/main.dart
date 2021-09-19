@@ -6,13 +6,21 @@ import 'package:flutter_three_tree_demo/mixin_test/imp_cls.dart';
 
 void main() {
   runApp(Container(
-    color: Colors.blue,
-    child: Row(
-      textDirection: TextDirection.ltr,
-      children: [
-        Image.network('https://www.example.com/1.png'),
-        const Text('A',textDirection: TextDirection.ltr,),
-      ],
+    child: Container(
+      color: Colors.blue,
+      child: Container(
+        child: Container(
+          child: ColoredBox(color: Colors.red,
+          child: Text('',textDirection: TextDirection.ltr,),),
+        ),
+      ),
+      // child: Row(
+      //   textDirection: TextDirection.ltr,
+      //   children: [
+      //     Container(child: Image.network('https://upload.jianshu.io/users/upload_avatars/24924109/326d23e9-37d1-41f2-9d99-7dfd0cd454c5?imageMogr2/auto-orient/strip|imageView2/1/w/100/h/100/format/webp')),
+      //     const Text('A',textDirection: TextDirection.ltr,),
+      //   ],
+      // ),
     ),
   ));
 
