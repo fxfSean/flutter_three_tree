@@ -431,7 +431,7 @@ abstract class ComponentElement extends Element {
 
 updateChild传入的slot对象是干什么用的呢？一句话总结就是，为了标记RenderObject挂载到RenderObject tree上的位置。
 
-首先，每一个Element都会最终包裹一个RenderObject，最终挂载到RenderObject tree上，不管是自身包裹，或者是它的子孙包裹。所以，当Element的直接child不包含RenderObject时，例如StatelessElement/StatefulElement，它就要标记下一个RenderObject对象要挂载到RenderObject tree上的哪个节点。所以，在它们的父类ComponentElement的updateChild方法中传的slot值就是要挂载的位置。
+首先，每一个Element都会最终包裹一个RenderObject，最终挂载到RenderObject tree上，不管是自身包裹，或者是它的子孙包裹。所以，当Element的直接child不包含RenderObject时，例如StatelessElement/StatefulElement，它就要标记下一个RenderObject对象要挂载到RenderObject tree上的哪个节点。所以，在它们的父类ComponentElement的updateChild方法中传的slot值就是要挂载的位置。比如这样的element节点
 
 ![](images/slot-element.drawio.png)
 
@@ -460,9 +460,15 @@ RenderObjectElement? _findAncestorRenderObjectElement() {
   }
 ```
 
+所以单个孩子的SingleChildRenderObjectElement不需要slot，因为总能找到 ancestor挂载点。而MultiChildRenderObjectElement，由于多个孩子都找到同一个ancestor节点，所以就又了slot将兄弟姐妹节点按顺序排列起来，生成IndexedSlot<Element?>(i, previousChild)的slot，这就有了初始的slot往下传递，所以slot是从MultiChildRenderObjectElement这样的节点开始分化的
 
+> 这里排除了刚开始建立渲染树的根节点_rootChildSlot
+
+![](images/slot-multi.png)
 
 ## 有什么作用
+
+
 
 ## 开发中注意什么
 
