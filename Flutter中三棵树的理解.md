@@ -467,6 +467,12 @@ RenderObjectElement? _findAncestorRenderObjectElement() {
 
 ## 总结
 
-本篇为三棵树理解的第一篇，重点分析了三棵树的建立过程，下一篇我们继续分析三棵树的刷新过程，以及为什么要设计三棵树，以及理解了三棵树的概念，对我们开发中有哪些指导或者注意的点，如果对下文还有期待，请给本文点赞，我抓紧更新😄。
+本篇为三棵树理解的第一篇，重点分析了三棵树的建立过程，下一篇我们继续分析三棵树的刷新过程，以及为什么要设计三棵树，以及理解了三棵树的概念，对我们开发中有哪些指导或者注意的点。
 
 文中难免有个人理解，有偏差的地方，请大家批评指正，多谢！
+
+## 参考
+
+https://flutter.dev/docs/resources/architectural-overview
+
+https://www.yuque.com/xytech/flutter/tge705
