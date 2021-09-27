@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_three_tree_demo/component/bird.dart';
-import 'package:flutter_three_tree_demo/component/my_text.dart';
-import 'package:flutter_three_tree_demo/component/yellow_bird.dart';
-import 'package:flutter_three_tree_demo/mixin_test/imp_cls.dart';
 
 void main() {
   runApp(Container(
